@@ -45,22 +45,10 @@ pub fn main() !void {
     const total_len = config.directory.len + 1 + config.database_file.len;
     var dir_buf_view = dir_buf;
     dir_buf_view.len = total_len;
-    var child = std.process.Child.init(&[_][]const u8{ "echo", "Hello, World\n" }, alloc);
-    child.stdout_behavior = .Pipe;
-    child.stderr_behavior = .Pipe;
-    var stdout: std.ArrayListUnmanaged(u8) = .empty;
-    defer stdout.deinit(alloc);
-    var stderr: std.ArrayListUnmanaged(u8) = .empty;
-    defer stderr.deinit(alloc);
-
-    try child.spawn();
-    try child.collectOutput(alloc, &stdout, &stderr, 1024);
-    _ = try std.io.getStdErr().writer().print("Error: {s}\n", .{stderr.items});
-    _ = try std.io.getStdOut().writer().print("StdOut: {s}\n", .{stdout.items});
-    const term = try child.wait();
-
-    try std.testing.expectEqual(term.Exited, 0);
-    child.cwd = config.directory;
+    var cmd = try shellcmd.execute_blocking(dir_buf_view, &[_][]const u8{ "echo", "Hello, World!" }, alloc, 1024);
+    std.debug.print("Command StdOut: {s}", .{cmd.stdout.items});
+    std.debug.print("Command StdErr: {s}", .{cmd.stderr.items});
+    defer cmd.deinit(alloc);
 
     const db = try simpledb.SimpleDB(database, 1024 * 1024 * 1024).init(dir_buf_view);
     const old_content = try db.get_content(alloc);
@@ -77,3 +65,4 @@ const std = @import("std");
 const schule_lib = @import("schule_zig_lib");
 const args = schule_lib.args;
 const simpledb = schule_lib.simpledb;
+const shellcmd = schule_lib.shellcmd.shellcmd;
