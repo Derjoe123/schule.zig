@@ -21,7 +21,15 @@ pub fn SimpleDB(comptime DBStructType: type, comptime MaxByteSize: usize) type {
             try std.json.stringify(content, .{}, dbwriter);
         }
         pub fn init(db_file_abs_path: []const u8) std.fs.File.OpenError!Self {
-            return Self{ .db_file = try std.fs.openFileAbsolute(db_file_abs_path, .{ .mode = .read_write }) };
+            var s: Self = undefined;
+
+            s.db_file = std.fs.openFileAbsolute(db_file_abs_path, .{ .mode = .read_write }) catch |err| blk: {
+                std.debug.print("SimpleDB.init: Open File Error: {}", .{err});
+                _ = try std.fs.createFileAbsolute(db_file_abs_path, .{ .exclusive = false });
+                break :blk try std.fs.openFileAbsolute(db_file_abs_path, .{ .mode = .read_write });
+            };
+
+            return s;
         }
         pub fn deinit(self: *const Self) void {
             self.db_file.close();
