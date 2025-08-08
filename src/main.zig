@@ -48,8 +48,8 @@ pub fn main() !void {
 
     try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "add", config.directory }, alloc, 2048);
     try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "commit", "-m'automatic save'" }, alloc, 2048);
-    try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push" }, alloc, 2048);
     try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "pull" }, alloc, 2048);
+    try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push" }, alloc, 2048);
 
     const db = try simpledb.SimpleDB(database, 1024 * 1024 * 1024).init(dir_buf_view);
     const old_content = try db.get_content(alloc);
