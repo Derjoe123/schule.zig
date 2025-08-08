@@ -54,9 +54,7 @@ pub fn main() !void {
     const db = try simpledb.SimpleDB(database, 1024 * 1024 * 1024).init(dir_buf_view);
     const old_content = try db.get_content(alloc);
     defer old_content.deinit();
-    std.debug.print("Old Content: {}\n", .{old_content.value});
     const new_content = database{ .tables = &[_]table{ table{ .data = "test" }, table{ .data = "test2" } } };
-    std.debug.print("New Content: {}\n", .{new_content});
     try db.write_content(&new_content);
     defer db.deinit();
 }
