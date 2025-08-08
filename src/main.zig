@@ -45,10 +45,11 @@ pub fn main() !void {
     const total_len = config.directory.len + 1 + config.database_file.len;
     var dir_buf_view = dir_buf;
     dir_buf_view.len = total_len;
-    var cmd = try shellcmd.execute_blocking(dir_buf_view, &[_][]const u8{ "echo", "Hello, World!" }, alloc, 1024);
-    std.debug.print("Command StdOut: {s}", .{cmd.stdout.items});
-    std.debug.print("Command StdErr: {s}", .{cmd.stderr.items});
-    defer cmd.deinit(alloc);
+
+    try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "add", config.directory }, alloc, 2048);
+    try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "commit", "-m\'automatic save\'" }, alloc, 2048);
+    try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push", "--set-upstream origin main" }, alloc, 2048);
+    try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "pull" }, alloc, 2048);
 
     const db = try simpledb.SimpleDB(database, 1024 * 1024 * 1024).init(dir_buf_view);
     const old_content = try db.get_content(alloc);
