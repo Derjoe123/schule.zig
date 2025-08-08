@@ -46,7 +46,7 @@ pub const shellcmd = struct {
             try std.fmt.format(writer, "\nOut:{s}\n", .{cmd.stdout.items});
         }
         if (cmd.stderr.items.len > 0) {
-            try std.fmt.format(writer, "Err:{s}\n", .{cmd.stderr.items});
+            try std.fmt.format(writer, "\nErr:{s}\n", .{cmd.stderr.items});
         }
 
         if (term.Exited != 0) {
