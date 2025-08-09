@@ -5,6 +5,11 @@ var config = struct {
     do_git_commit: bool = true,
     do_git_push: bool = true,
 }{};
+const simple_db_t = simpledb.SimpleDB(database, 1024 * 1024 * 1024);
+const command_input = struct {
+    name: []const u8,
+    exec: fn (db: *simple_db_t) anyerror!void,
+};
 const table = struct {
     data: []const u8,
 };
@@ -58,7 +63,7 @@ pub fn main() !void {
         try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push" }, alloc, 2048);
     }
 
-    const db = try simpledb.SimpleDB(database, 1024 * 1024 * 1024).init(dir_buf_view);
+    const db = try simple_db_t.init(dir_buf_view);
     const old_content = try db.get_content(alloc);
     defer old_content.deinit();
     const new_content = database{ .tables = &[_]table{ table{ .data = "test" }, table{ .data = "test2" } } };

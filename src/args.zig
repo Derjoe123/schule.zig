@@ -7,7 +7,7 @@ pub fn display_args_help(writer: anytype, Struct: anytype, flags: []const Flag) 
     std.debug.assert(info == .@"struct");
     _ = try writer.write("Help Menu:\n");
     _ = try writer.write("Usage: <prog_name> <command> <command input> <flags> <args>\n");
-    _ = try writer.write("command example: \n");
+    _ = try writer.write("command example: status\n");
     _ = try writer.write("Command options:\n");
     _ = try writer.write("Flag example: --help\n");
     _ = try writer.write("Flags options:\n");
