@@ -5,11 +5,12 @@ var config = struct {
     do_git_commit: bool = true,
     do_git_push: bool = true,
 }{};
+
+fn status_fn(db: *void) anyerror!void {
+    _ = db;
+    return error.Unimpl;
+}
 const simple_db_t = simpledb.SimpleDB(database, 1024 * 1024 * 1024);
-const command_input = struct {
-    name: []const u8,
-    exec: fn (db: *simple_db_t) anyerror!void,
-};
 const table = struct {
     data: []const u8,
 };
@@ -31,12 +32,16 @@ pub fn main() !void {
     const argv = std.os.argv;
     const writer = std.io.getStdOut().writer();
 
+    const input_cmds: []const command_input = &[_]command_input{
+        command_input{ .name = "status", .desc = "print the status of the school database", .exec = status_fn },
+    };
+
     try args.parse_args(argv, &config);
     if (args.flag_set(argv, "--help")) {
         const flags: []const args.Flag = &[_]args.Flag{
             args.Flag{ .name = "--help", .desc = "show the help menu" },
         };
-        try args.display_args_help(writer, &config, flags);
+        try args.display_args_help(writer, input_cmds, &config, flags);
     }
 
     if (config.directory.ptr[config.directory.len - 1] == '/') {
@@ -75,5 +80,6 @@ const std = @import("std");
 
 const schule_lib = @import("schule_zig_lib");
 const args = schule_lib.args;
+const command_input = schule_lib.args.command_input;
 const simpledb = schule_lib.simpledb;
 const shellcmd = schule_lib.shellcmd.shellcmd;
