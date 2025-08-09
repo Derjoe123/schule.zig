@@ -1,8 +1,9 @@
 var config = struct {
     directory: []const u8 = ".",
     database_file: []const u8 = "schule.sdb", // relative to config.directory
-    git_commit_command: []const u8 = "git add . && git commit -m '{}' && git push --set-upstream origin main",
     do_git_pull: bool = true,
+    do_git_commit: bool = true,
+    do_git_push: bool = true,
 }{};
 const table = struct {
     data: []const u8,
@@ -46,10 +47,16 @@ pub fn main() !void {
     var dir_buf_view = dir_buf;
     dir_buf_view.len = total_len;
 
-    try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "add", config.directory }, alloc, 2048);
-    try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "commit", "-m'automatic save'" }, alloc, 2048);
-    try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "pull" }, alloc, 2048);
-    try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push" }, alloc, 2048);
+    if (config.do_git_commit) {
+        try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "add", config.directory }, alloc, 2048);
+        try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "commit", "-m'automatic save'" }, alloc, 2048);
+    }
+    if (config.do_git_pull) {
+        try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "pull" }, alloc, 2048);
+    }
+    if (config.do_git_push) {
+        try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push" }, alloc, 2048);
+    }
 
     const db = try simpledb.SimpleDB(database, 1024 * 1024 * 1024).init(dir_buf_view);
     const old_content = try db.get_content(alloc);
