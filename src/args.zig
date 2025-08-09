@@ -7,6 +7,15 @@ pub const Flag = struct {
     name: []const u8,
     desc: []const u8,
 };
+pub fn exec_commands_with_args(database: *void, cmds: []const command_input, args: [][*:0]u8) anyerror!void {
+    for (args) |arg| {
+        for (cmds) |cmd| {
+            if (std.mem.eql(cmd.name, arg)) {
+                try cmd.exec(database);
+            }
+        }
+    }
+}
 pub fn display_args_help(writer: anytype, cmds: []const command_input, Struct: anytype, flags: []const Flag) !void {
     const info = @typeInfo(@TypeOf(Struct.*));
     std.debug.assert(info == .@"struct");
