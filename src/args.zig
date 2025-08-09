@@ -9,8 +9,11 @@ pub const Flag = struct {
 };
 pub fn exec_commands_with_args(database: *void, cmds: []const command_input, args: [][*:0]u8) anyerror!void {
     for (args) |arg| {
+        var arg_slice: []const u8 = undefined;
+        arg_slice.ptr = arg;
+        arg_slice.len = std.mem.len(arg);
         for (cmds) |cmd| {
-            if (std.mem.eql(cmd.name, arg)) {
+            if (std.mem.eql(u8, cmd.name, arg_slice)) {
                 try cmd.exec(database);
             }
         }

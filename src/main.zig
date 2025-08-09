@@ -68,8 +68,9 @@ pub fn main() !void {
         try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push" }, alloc, 2048);
     }
 
-    const db = try simple_db_t.init(dir_buf_view);
+    var db = try simple_db_t.init(dir_buf_view);
     const old_content = try db.get_content(alloc);
+    try args.exec_commands_with_args(@ptrCast(&db), input_cmds, argv);
     defer old_content.deinit();
     const new_content = database{ .tables = &[_]table{ table{ .data = "test" }, table{ .data = "test2" } } };
     try db.write_content(&new_content);
