@@ -67,7 +67,6 @@ pub fn parse_args(args: [][*:0]u8, Struct: anytype) !void {
             switch (field.type) {
                 bool => {
                     @field(Struct, field.name) = std.mem.eql(u8, arg, "true") or std.mem.eql(u8, arg, "True");
-                    // std.debug.print("bool set to {}\n", .{@field(Struct, field.name)});
                 },
                 []const u8 => {
                     @field(Struct, field.name) = arg;

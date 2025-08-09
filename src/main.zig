@@ -8,10 +8,9 @@ var config = struct {
 
 fn status_fn(db: *void) anyerror!void {
     _ = db;
-    std.log.info("\nstatus_fn\n", .{});
-    // return error.Unimpl;
+    // std.log.info("\nstatus_fn\n", .{});
+    return error.Unimpl;
 }
-const simple_db_t = simpledb.SimpleDB(database, 1024 * 1024 * 1024);
 const table = struct {
     data: []const u8,
 };
@@ -23,7 +22,7 @@ pub fn main() !void {
     const alloc = gpa.allocator();
     defer {
         if (gpa.deinit() == .leak) {
-            std.debug.print("Memory Leak!", .{});
+            std.log.err("Memory Leak!", .{});
         }
     }
     const dir_buf = try alloc.alloc(u8, std.fs.max_path_bytes);
@@ -69,7 +68,7 @@ pub fn main() !void {
     //     try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push" }, alloc, 2048);
     // }
 
-    var db = try simple_db_t.init(dir_buf_view);
+    var db = try simpledb.SimpleDB(database, 1024 * 1024 * 1024).init(dir_buf_view);
     defer db.deinit();
     const old_content = try db.get_content(alloc);
     defer old_content.deinit();
