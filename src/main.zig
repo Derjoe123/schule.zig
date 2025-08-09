@@ -4,7 +4,8 @@ var config = struct {
     do_git_pull: bool = true,
     do_git_commit: bool = true,
     do_git_push: bool = true,
-}{};
+    list_items: []const u8,
+}{ .list_items = "" };
 
 fn status_fn(db: *void) anyerror!void {
     _ = db;
