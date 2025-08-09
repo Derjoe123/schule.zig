@@ -69,12 +69,12 @@ pub fn main() !void {
     }
 
     var db = try simple_db_t.init(dir_buf_view);
+    defer db.deinit();
     const old_content = try db.get_content(alloc);
-    try args.exec_commands_with_args(@ptrCast(&db), input_cmds, argv);
     defer old_content.deinit();
+    try args.exec_commands_with_args(@ptrCast(&db), input_cmds, argv);
     const new_content = database{ .tables = &[_]table{ table{ .data = "test" }, table{ .data = "test2" } } };
     try db.write_content(&new_content);
-    defer db.deinit();
 }
 
 const std = @import("std");
