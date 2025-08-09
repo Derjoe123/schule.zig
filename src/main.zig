@@ -32,16 +32,17 @@ pub fn main() !void {
     const argv = std.os.argv;
     const writer = std.io.getStdOut().writer();
 
-    const input_cmds: []const command_input = &[_]command_input{
-        command_input{ .name = "status", .desc = "print the status of the school database", .exec = status_fn },
-    };
+    // const input_cmds: []const command_input = &[_]command_input{
+    //     command_input{ .name = "status", .desc = "print the status of the school database", .exec = status_fn, .command_arg = "" },
+    //     command_input{ .name = "list", .desc = "print a list of selected category", .exec = status_fn, .command_arg = "category" },
+    // };
 
     try args.parse_args(argv, &config);
     if (args.flag_set(argv, "--help")) {
         const flags: []const args.Flag = &[_]args.Flag{
             args.Flag{ .name = "--help", .desc = "show the help menu" },
         };
-        try args.display_args_help(writer, input_cmds, &config, flags);
+        try args.display_args_help(writer, &config, flags);
     }
 
     if (config.directory.ptr[config.directory.len - 1] == '/') {
@@ -72,7 +73,7 @@ pub fn main() !void {
     defer db.deinit();
     const old_content = try db.get_content(alloc);
     defer old_content.deinit();
-    try args.exec_commands_with_args(@ptrCast(&db), input_cmds, argv);
+    // try args.exec_commands_with_args(@ptrCast(&db), input_cmds, argv);
     const new_content = database{ .tables = &[_]table{ table{ .data = "test" }, table{ .data = "test2" } } };
     try db.write_content(&new_content);
 }
@@ -81,6 +82,5 @@ const std = @import("std");
 
 const schule_lib = @import("schule_zig_lib");
 const args = schule_lib.args;
-const command_input = schule_lib.args.command_input;
 const simpledb = schule_lib.simpledb;
 const shellcmd = schule_lib.shellcmd.shellcmd;

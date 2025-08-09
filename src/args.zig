@@ -1,34 +1,12 @@
-pub const command_input = struct {
-    name: []const u8,
-    desc: []const u8,
-    exec: *const fn (db: *void) anyerror!void,
-};
 pub const Flag = struct {
     name: []const u8,
     desc: []const u8,
 };
-pub fn exec_commands_with_args(database: *void, cmds: []const command_input, args: [][*:0]u8) anyerror!void {
-    for (args) |arg| {
-        var arg_slice: []const u8 = undefined;
-        arg_slice.ptr = arg;
-        arg_slice.len = std.mem.len(arg);
-        for (cmds) |cmd| {
-            if (std.mem.eql(u8, cmd.name, arg_slice)) {
-                try cmd.exec(database);
-            }
-        }
-    }
-}
-pub fn display_args_help(writer: anytype, cmds: []const command_input, Struct: anytype, flags: []const Flag) !void {
+pub fn display_args_help(writer: anytype, Struct: anytype, flags: []const Flag) !void {
     const info = @typeInfo(@TypeOf(Struct.*));
     std.debug.assert(info == .@"struct");
     _ = try writer.write("Help Menu:\n");
-    _ = try writer.write("Usage: <prog_name> <command> <command input> <flags> <args>\n");
-    _ = try writer.write("Command example: status\n");
-    _ = try writer.write("Command options:\n");
-    for (cmds) |cmd| {
-        try std.fmt.format(writer, "\n\t{s}: \n\tdesc: {s}\n", .{ cmd.name, cmd.desc });
-    }
+    _ = try writer.write("Usage: <prog_name> <flags> <args>\n");
     _ = try writer.write("Flag example: --help\n");
     _ = try writer.write("Flags options:\n");
     for (flags) |flag| {
