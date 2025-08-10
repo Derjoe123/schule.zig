@@ -9,8 +9,8 @@ var config = struct {
 
 fn status_fn(db: *void) anyerror!void {
     _ = db;
-    // std.log.info("\nstatus_fn\n", .{});
-    return error.Unimpl;
+    std.log.info("\nstatus_fn\n", .{});
+    // return error.Unimpl;
 }
 const table = struct {
     data: []const u8,
