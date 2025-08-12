@@ -126,6 +126,7 @@ pub const schuldb = struct {
         var parts = std.mem.splitScalar(u8, args, ',');
 
         const title = parts.next() orelse return error.MissingTitle;
+        try writer.print("title: {s}", .{title});
         const subject = parts.next() orelse return error.MissingSubject;
         const type_str = parts.next() orelse return error.MissingType;
         const priority_str = parts.next() orelse return error.MissingPriority;
