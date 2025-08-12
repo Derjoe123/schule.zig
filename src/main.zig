@@ -62,9 +62,9 @@ pub fn main() !void {
     if (config.do_git_pull) {
         try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "pull" }, alloc, 2048);
     }
-    if (config.do_git_push) {
-        try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push" }, alloc, 2048);
-    }
+    // if (config.do_git_push) {
+    //     try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push" }, alloc, 2048);
+    // }
     var db_parser = try db_parser_t.init(dir_buf_view);
     defer db_parser.deinit();
 
