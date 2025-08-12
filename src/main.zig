@@ -71,10 +71,10 @@ pub fn main() !void {
     var school_db: schuldb = undefined;
     var existing_data: ?std.json.Parsed(schuldb_mod.SchulDBData) = null;
     defer {
+        school_db.deinit();
         if (existing_data) |data| {
             data.deinit();
         }
-        school_db.deinit();
     }
 
     // Load existing data or create new
