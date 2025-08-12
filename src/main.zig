@@ -69,10 +69,10 @@ pub fn main() !void {
     defer db_parser.deinit();
 
     // Load existing data or create new
-    var school_db = if (loadExistingData(&db_parser, alloc)) |existing_data|
-        try schuldb.fromData(alloc, existing_data.value)
-    else
-        schuldb.init(alloc);
+    var school_db = if (loadExistingData(&db_parser, alloc)) |existing_data| {
+        try schuldb.fromData(alloc, existing_data.value);
+        existing_data.deinit();
+    } else schuldb.init(alloc);
     defer school_db.deinit();
 
     try writer.print("schulddb: {}", .{school_db});
