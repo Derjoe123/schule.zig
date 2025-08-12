@@ -4,11 +4,13 @@ var config = struct {
     do_git_pull: bool = true,
     do_git_commit: bool = true,
     do_git_push: bool = true,
-    cmd: ?[]const u8 = null,
-    // status_cmd: ?[]const u8 = null,
-    // list_cmd: ?[]const u8 = null,
-    // new_cmd: ?[]const u8 = null,
-    // remove_cmd: ?[]const u8 = null,
+    list: ?[]const u8 = null,
+    modify: ?[]const u8 = null,
+    rank: ?[]const u8 = null,
+    remove: ?[]const u8 = null,
+    search: ?[]const u8 = null,
+    status: ?[]const u8 = null,
+    add: ?[]const u8 = null,
 }{};
 
 const db_parser_t = simpledb.SimpleDB(schuldb_mod.SchulDBData, 1024 * 1024 * 1024);
@@ -74,6 +76,27 @@ pub fn main() !void {
     defer school_db.deinit();
 
     try writer.print("schulddb: {}", .{school_db});
+    if (config.list) |cmd| {
+        try school_db.list(cmd, writer);
+    }
+    if (config.modify) |cmd| {
+        try school_db.modify(cmd, writer);
+    }
+    if (config.rank) |cmd| {
+        try school_db.rank(cmd, writer);
+    }
+    if (config.remove) |cmd| {
+        try school_db.remove(cmd);
+    }
+    if (config.search) |cmd| {
+        try school_db.search(cmd, writer);
+    }
+    if (config.status) |cmd| {
+        try school_db.status(cmd, writer);
+    }
+    if (config.add) |cmd| {
+        try school_db.add(cmd);
+    }
 
     const data = school_db.toData();
     try db_parser.write_content(&data);

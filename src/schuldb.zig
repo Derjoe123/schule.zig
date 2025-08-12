@@ -123,7 +123,7 @@ pub const schuldb = struct {
 
     // Command: add <title> <subject> <type> <priority> [due_date] [description]
     pub fn add(self: *Self, args: []const u8) !void {
-        var parts = std.mem.split(u8, args, " ");
+        var parts = std.mem.splitScalar(u8, args, ' ');
 
         const title = parts.next() orelse return error.MissingTitle;
         const subject = parts.next() orelse return error.MissingSubject;
@@ -155,7 +155,7 @@ pub const schuldb = struct {
         try self.items.append(new_item);
         self.next_id += 1;
 
-        std.debug.print("Added item '{}' with ID {}\n", .{ title, new_item.id });
+        std.debug.print("Added item '{any}' with ID {any}\n", .{ title, new_item.id });
     }
 
     // Command: remove <id>
@@ -182,11 +182,11 @@ pub const schuldb = struct {
     }
 
     // Command: list [filter]
-    pub fn list(self: *Self, args: []const u8) !void {
+    pub fn list(self: *Self, args: []const u8, writer: anytype) !void {
         const filter = std.mem.trim(u8, args, " ");
 
-        std.debug.print("ID\tTitle\t\t\tSubject\t\tType\t\tPriority\tStatus\t\tDue Date\n");
-        std.debug.print("--------------------------------------------------------------------\n");
+        try writer.print("ID\tTitle\t\t\tSubject\t\tType\t\tPriority\tStatus\t\tDue Date\n", .{});
+        try writer.print("--------------------------------------------------------------------\n", .{});
 
         for (self.items.items) |item| {
             // Apply filter if provided
@@ -199,55 +199,55 @@ pub const schuldb = struct {
             }
 
             const due_str = if (item.due_date) |due| due else "None";
-            std.debug.print("{}\t{s:<20}\t{s:<10}\t{s:<10}\t{s:<10}\t{s:<10}\t{s}\n", .{ item.id, item.title, item.subject, @tagName(item.item_type), @tagName(item.priority), @tagName(item.status), due_str });
+            try writer.print("{}\t{s:<20}\t{s:<10}\t{s:<10}\t{s:<10}\t{s:<10}\t{s}\n", .{ item.id, item.title, item.subject, @tagName(item.item_type), @tagName(item.priority), @tagName(item.status), due_str });
         }
     }
 
     // Command: status
-    pub fn status(self: *Self, args: []const u8) !void {
+    pub fn status(self: *Self, args: []const u8, writer: anytype) !void {
         _ = args; // unused
 
-        std.debug.print("=== SCHOOL STATUS REPORT ===\n\n");
+        try writer.print("=== SCHOOL STATUS REPORT ===\n\n", .{});
 
         // Show overdue items
-        std.debug.print("OVERDUE ITEMS:\n");
+        try writer.print("OVERDUE ITEMS:\n", .{});
         var has_overdue = false;
         for (self.items.items) |item| {
             if (item.status == .Overdue) {
                 has_overdue = true;
                 const due_str = if (item.due_date) |due| due else "No due date";
-                std.debug.print("  [{}] {s} ({s}) - Due: {s}\n", .{ item.id, item.title, item.subject, due_str });
+                try writer.print("  [{}] {s} ({s}) - Due: {s}\n", .{ item.id, item.title, item.subject, due_str });
             }
         }
-        if (!has_overdue) std.debug.print("  None\n");
+        if (!has_overdue) try writer.print("  None\n", .{});
 
         // Show high priority items
-        std.debug.print("\nHIGH PRIORITY ITEMS:\n");
+        try writer.print("\nHIGH PRIORITY ITEMS:\n", .{});
         var has_high_priority = false;
         for (self.items.items) |item| {
             if (item.priority == .High or item.priority == .Critical) {
                 has_high_priority = true;
                 const due_str = if (item.due_date) |due| due else "No due date";
-                std.debug.print("  [{}] {s} ({s}) - Priority: {s}, Due: {s}\n", .{ item.id, item.title, item.subject, @tagName(item.priority), due_str });
+                try writer.print("  [{}] {s} ({s}) - Priority: {s}, Due: {s}\n", .{ item.id, item.title, item.subject, @tagName(item.priority), due_str });
             }
         }
-        if (!has_high_priority) std.debug.print("  None\n");
+        if (!has_high_priority) try writer.print("  None\n", .{});
 
         // Show upcoming items (items with due dates in the next 7 days)
-        std.debug.print("\nUPCOMING ITEMS:\n");
+        try writer.print("\nUPCOMING ITEMS:\n", .{});
         var has_upcoming = false;
         for (self.items.items) |item| {
             if (item.due_date != null and item.status != .Completed) {
                 has_upcoming = true;
-                std.debug.print("  [{}] {s} ({s}) - Due: {s}\n", .{ item.id, item.title, item.subject, item.due_date.? });
+                try writer.print("  [{}] {s} ({s}) - Due: {s}\n", .{ item.id, item.title, item.subject, item.due_date.? });
             }
         }
-        if (!has_upcoming) std.debug.print("  None\n");
+        if (!has_upcoming) try writer.print("  None\n", .{});
     }
 
     // Command: modify <id> <field> <value>
-    pub fn modify(self: *Self, args: []const u8) !void {
-        var parts = std.mem.split(u8, args, " ");
+    pub fn modify(self: *Self, args: []const u8, writer: anytype) !void {
+        var parts = std.mem.splitScalar(u8, args, ' ');
 
         const id_str = parts.next() orelse return error.MissingId;
         const field = parts.next() orelse return error.MissingField;
@@ -271,7 +271,7 @@ pub const schuldb = struct {
                     return error.InvalidField;
                 }
 
-                std.debug.print("Modified item {} - set {} to {s}\n", .{ id, field, value });
+                try writer.print("Modified item {any} - set {any} to {any}\n", .{ id, field, value });
                 return;
             }
         }
@@ -279,30 +279,30 @@ pub const schuldb = struct {
     }
 
     // Command: rank [by_priority|by_due]
-    pub fn rank(self: *Self, args: []const u8) !void {
+    pub fn rank(self: *Self, args: []const u8, writer: anytype) !void {
         const sort_type = std.mem.trim(u8, args, " ");
 
         if (std.mem.eql(u8, sort_type, "by_priority") or sort_type.len == 0) {
             std.mem.sort(SchoolItem, self.items.items, {}, compareByPriority);
-            std.debug.print("Items sorted by priority (highest first):\n");
+            try writer.print("Items sorted by priority (highest first):\n", .{});
         } else if (std.mem.eql(u8, sort_type, "by_due")) {
             std.mem.sort(SchoolItem, self.items.items, {}, compareByDueDate);
-            std.debug.print("Items sorted by due date (earliest first):\n");
+            try writer.print("Items sorted by due date (earliest first):\n", .{});
         } else {
             return error.InvalidSortType;
         }
 
-        try self.list("");
+        try self.list("", writer);
     }
 
     // Command: search <query>
-    pub fn search(self: *Self, args: []const u8) !void {
+    pub fn search(self: *Self, args: []const u8, writer: anytype) !void {
         const query = std.mem.trim(u8, args, " ");
         if (query.len == 0) return error.EmptyQuery;
 
-        std.debug.print("Search results for '{s}':\n", .{query});
-        std.debug.print("ID\tTitle\t\t\tSubject\t\tType\t\tPriority\tStatus\t\tDue Date\n");
-        std.debug.print("--------------------------------------------------------------------\n");
+        try writer.print("Search results for '{s}':\n", .{query});
+        try writer.print("ID\tTitle\t\t\tSubject\t\tType\t\tPriority\tStatus\t\tDue Date\n", .{});
+        try writer.print("--------------------------------------------------------------------\n", .{});
 
         var found = false;
         for (self.items.items) |item| {
