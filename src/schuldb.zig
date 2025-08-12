@@ -123,6 +123,7 @@ pub const schuldb = struct {
 
     // Command: add <title> <subject> <type> <priority> [due_date] [description]
     pub fn add(self: *Self, args: []const u8) !void {
+        std.debug.print("args: {s}\n", .{args});
         var parts = std.mem.splitScalar(u8, args, ' ');
 
         const title = parts.next() orelse return error.MissingTitle;
