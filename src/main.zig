@@ -68,11 +68,13 @@ pub fn main() !void {
     var db_parser = try db_parser_t.init(dir_buf_view);
     defer db_parser.deinit();
 
+    var school_db: schuldb = undefined;
     // Load existing data or create new
-    var school_db = if (loadExistingData(&db_parser, alloc)) |existing_data| {
-        try schuldb.fromData(alloc, existing_data.value);
-        existing_data.deinit();
-    } else schuldb.init(alloc);
+    if (loadExistingData(&db_parser, alloc)) |existing_data| {
+        defer existing_data.deinit();
+        school_db = try schuldb.fromData(alloc, existing_data.value);
+    } else school_db = schuldb.init(alloc);
+
     defer school_db.deinit();
 
     try writer.print("schulddb: {}", .{school_db});
