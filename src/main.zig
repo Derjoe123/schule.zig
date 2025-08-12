@@ -69,7 +69,7 @@ pub fn main() !void {
     defer db_parser.deinit();
 
     var school_db: schuldb = undefined;
-    var existing_data: ?std.json.Parsed(schuldb_mod.SchulDBData) = null;
+    var existing_data: ?db_parser_t.DBContent = null;
     defer {
         school_db.deinit();
         if (existing_data) |data| {
@@ -112,7 +112,7 @@ pub fn main() !void {
     try db_parser.write_content(&data);
 }
 
-fn loadExistingData(db: *db_parser_t, allocator: std.mem.Allocator) ?std.json.Parsed(schuldb_mod.SchulDBData) {
+fn loadExistingData(db: *db_parser_t, allocator: std.mem.Allocator) ?db_parser_t.DBContent {
     return db.get_content(allocator) catch |err| {
         std.log.err("Error loading database: {}\n", .{err});
         return null;

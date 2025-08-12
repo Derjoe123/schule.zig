@@ -2,6 +2,22 @@ const std = @import("std");
 
 pub fn SimpleDB(comptime DBStructDataType: type, comptime MaxByteSize: usize) type {
     return struct {
+        pub const DBContent = struct {
+            pub fn init(allocator: std.mem.Allocator, json: std.json.Parsed(DBStructDataType), filecontents: []u8) DBContent {
+                var self: DBContent = undefined;
+                self.allocator = allocator;
+                self.json = json;
+                self.filecontents = filecontents;
+                return self;
+            }
+            pub fn deinit(self: *DBContent) void {
+                self.allocator.free(self.filecontents);
+                self.json.deinit();
+            }
+            allocator: std.mem.Allocator,
+            json: std.json.Parsed(DBStructDataType),
+            filecontents: []u8,
+        };
         const Self = @This();
 
         db_file: std.fs.File = undefined,
@@ -12,10 +28,10 @@ pub fn SimpleDB(comptime DBStructDataType: type, comptime MaxByteSize: usize) ty
             return arr;
         }
 
-        pub fn get_content(self: *const Self, allocator: std.mem.Allocator) !std.json.Parsed(DBStructDataType) {
+        pub fn get_content(self: *const Self, allocator: std.mem.Allocator) !DBContent {
             const content = try self.get_db_content(allocator);
-            defer allocator.free(content);
-            return try std.json.parseFromSlice(DBStructDataType, allocator, content, .{ .ignore_unknown_fields = true });
+            // defer allocator.free(content);
+            return DBContent.init(allocator, try std.json.parseFromSlice(DBStructDataType, allocator, content, .{ .ignore_unknown_fields = true }), content);
         }
 
         pub fn write_content(self: *const Self, content: *const DBStructDataType) !void {
