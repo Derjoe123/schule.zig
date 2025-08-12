@@ -4,6 +4,7 @@ var config = struct {
     do_git_pull: bool = true,
     do_git_commit: bool = true,
     do_git_push: bool = true,
+    status_cmd: ?[]const u8 = null,
     list_cmd: ?[]const u8 = null,
     new_cmd: ?[]const u8 = null,
     remove_cmd: ?[]const u8 = null,
