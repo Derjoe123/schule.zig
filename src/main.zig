@@ -72,7 +72,7 @@ pub fn main() !void {
     // Load existing data or create new
     if (loadExistingData(&db_parser, alloc)) |existing_data| {
         defer existing_data.deinit();
-        school_db = try schuldb.fromData(alloc, existing_data.value);
+        school_db = try schuldb.fromData(existing_data.arena.allocator(), existing_data.value);
     } else school_db = schuldb.init(alloc);
 
     defer school_db.deinit();
