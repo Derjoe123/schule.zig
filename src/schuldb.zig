@@ -156,7 +156,7 @@ pub const schuldb = struct {
         try self.items.append(new_item);
         self.next_id += 1;
 
-        try writer.print("Added item '{any}' with ID {any}\n", .{ title, new_item.id });
+        try writer.print("Added item '{s}' with ID {d}\n", .{ title, new_item.id });
     }
 
     // Command: remove <id>
@@ -175,7 +175,7 @@ pub const schuldb = struct {
                 if (removed_item.due_date) |due| self.allocator.free(due);
                 if (removed_item.notes) |notes| self.allocator.free(notes);
 
-                try writer.print("Removed item with ID {}\n", .{id});
+                try writer.print("Removed item with ID {d}\n", .{id});
                 return;
             }
         }
@@ -272,7 +272,7 @@ pub const schuldb = struct {
                     return error.InvalidField;
                 }
 
-                try writer.print("Modified item {any} - set {any} to {any}\n", .{ id, field, value });
+                try writer.print("Modified item {d} - set {s} to {s}\n", .{ id, field, value });
                 return;
             }
         }
