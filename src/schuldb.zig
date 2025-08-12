@@ -1,4 +1,5 @@
 const std = @import("std");
+const time = @import("time.zig");
 
 pub const Priority = enum {
     Low,
@@ -64,8 +65,8 @@ pub const SchoolItem = struct {
     item_type: ItemType,
     priority: Priority,
     status: Status,
-    due_date: ?[]const u8, // Format: "YYYY-MM-DD"
-    created_date: []const u8, // Format: "YYYY-MM-DD"
+    due_date: ?time.Time,
+    created_date: time.Time,
     notes: ?[]const u8,
 };
 
@@ -109,15 +110,6 @@ pub const schuldb = struct {
     }
 
     pub fn deinit(self: *Self) void {
-        // Free memory for strings in items
-        // for (self.items.items) |item| {
-        //     self.allocator.free(item.title);
-        //     if (item.description) |desc| self.allocator.free(desc);
-        //     self.allocator.free(item.subject);
-        //     self.allocator.free(item.created_date);
-        //     if (item.due_date) |due| self.allocator.free(due);
-        //     if (item.notes) |notes| self.allocator.free(notes);
-        // }
         self.items.deinit();
     }
 
@@ -138,7 +130,7 @@ pub const schuldb = struct {
         const description = parts.next();
 
         // Get current date (simplified - you might want to use a proper date library)
-        const created_date = try self.allocator.dupe(u8, "2024-08-12"); // You should implement proper date handling
+        const created_date = time.now(); // You should implement proper date handling
 
         const new_item = SchoolItem{
             .id = self.next_id,
@@ -148,7 +140,7 @@ pub const schuldb = struct {
             .item_type = item_type,
             .priority = priority,
             .status = .NotStarted,
-            .due_date = if (due_date) |due| try self.allocator.dupe(u8, due) else null,
+            .due_date = if (due_date) |due| try time.Time.fromFormattedString(time.Format.date_time, due) else null,
             .created_date = created_date,
             .notes = null,
         };
@@ -171,8 +163,8 @@ pub const schuldb = struct {
                 self.allocator.free(removed_item.title);
                 if (removed_item.description) |desc| self.allocator.free(desc);
                 self.allocator.free(removed_item.subject);
-                self.allocator.free(removed_item.created_date);
-                if (removed_item.due_date) |due| self.allocator.free(due);
+                // self.allocator.free(removed_item.created_date);
+                // if (removed_item.due_date) |due| self.allocator.free(due);
                 if (removed_item.notes) |notes| self.allocator.free(notes);
 
                 try writer.print("Removed item with ID {d}\n", .{id});
@@ -199,8 +191,13 @@ pub const schuldb = struct {
                 }
             }
 
-            const due_str = if (item.due_date) |due| due else "None";
-            try writer.print("{}\t{s:<20}\t{s:<10}\t{s:<10}\t{s:<10}\t{s:<10}\t{s}\n", .{ item.id, item.title, item.subject, @tagName(item.item_type), @tagName(item.priority), @tagName(item.status), due_str });
+            try writer.print("{}\t{s:<20}\t{s:<10}\t{s:<10}\t{s:<10}\t{s:<10}\t", .{ item.id, item.title, item.subject, @tagName(item.item_type), @tagName(item.priority), @tagName(item.status) });
+            if (item.due_date) |due| {
+                try due.format(time.Format.date_time, .{}, writer);
+                try writer.print("\n", .{});
+            } else {
+                try writer.print("None\n", .{});
+            }
         }
     }
 
@@ -216,8 +213,14 @@ pub const schuldb = struct {
         for (self.items.items) |item| {
             if (item.status == .Overdue) {
                 has_overdue = true;
-                const due_str = if (item.due_date) |due| due else "No due date";
-                try writer.print("  [{}] {s} ({s}) - Due: {s}\n", .{ item.id, item.title, item.subject, due_str });
+                try writer.print("  [{d}] {s} ({s}) - Due: ", .{ item.id, item.title, item.subject });
+
+                if (item.due_date) |due| {
+                    try due.format(time.Format.date_time, .{}, writer);
+                    try writer.print("\n", .{});
+                } else {
+                    try writer.print("None\n", .{});
+                }
             }
         }
         if (!has_overdue) try writer.print("  None\n", .{});
@@ -228,8 +231,13 @@ pub const schuldb = struct {
         for (self.items.items) |item| {
             if (item.priority == .High or item.priority == .Critical) {
                 has_high_priority = true;
-                const due_str = if (item.due_date) |due| due else "No due date";
-                try writer.print("  [{}] {s} ({s}) - Priority: {s}, Due: {s}\n", .{ item.id, item.title, item.subject, @tagName(item.priority), due_str });
+                try writer.print("  [{}] {s} ({s}) - Priority: {s}, Due: ", .{ item.id, item.title, item.subject, @tagName(item.priority) });
+                if (item.due_date) |due| {
+                    try due.format(time.Format.date_time, .{}, writer);
+                    try writer.print("\n", .{});
+                } else {
+                    try writer.print("None\n", .{});
+                }
             }
         }
         if (!has_high_priority) try writer.print("  None\n", .{});
@@ -240,7 +248,14 @@ pub const schuldb = struct {
         for (self.items.items) |item| {
             if (item.due_date != null and item.status != .Completed) {
                 has_upcoming = true;
-                try writer.print("  [{}] {s} ({s}) - Due: {s}\n", .{ item.id, item.title, item.subject, item.due_date.? });
+                try writer.print("  [{}] {s} ({s}) - Due:", .{ item.id, item.title, item.subject });
+
+                if (item.due_date) |due| {
+                    try due.format(time.Format.date_time, .{}, writer);
+                    try writer.print("\n", .{});
+                } else {
+                    try writer.print("None\n", .{});
+                }
             }
         }
         if (!has_upcoming) try writer.print("  None\n", .{});
@@ -263,17 +278,21 @@ pub const schuldb = struct {
                 } else if (std.mem.eql(u8, field, "priority")) {
                     item.priority = Priority.fromString(value) orelse return error.InvalidPriority;
                 } else if (std.mem.eql(u8, field, "due_date")) {
-                    if (item.due_date) |old_due| self.allocator.free(old_due);
-                    item.due_date = try self.allocator.dupe(u8, value);
+                    // if (item.due_date) |old_due| {
+                    //     self.allocator.free(old_due);
+                    // }
+                    item.due_date = try time.Time.fromFormattedString(time.Format.date_time, value);
                 } else if (std.mem.eql(u8, field, "notes")) {
-                    if (item.notes) |old_notes| self.allocator.free(old_notes);
+                    if (item.notes) |old_notes| {
+                        self.allocator.free(old_notes);
+                    }
                     item.notes = try self.allocator.dupe(u8, value);
                 } else {
                     return error.InvalidField;
                 }
 
                 try writer.print("Modified item {d} - set {s} to {s}\n", .{ id, field, value });
-                return;
+                return {};
             }
         }
         return error.ItemNotFound;
@@ -298,28 +317,34 @@ pub const schuldb = struct {
 
     // Command: search <query>
     pub fn search(self: *Self, args: []const u8, writer: anytype) !void {
-        const query = std.mem.trim(u8, args, " ");
-        if (query.len == 0) return error.EmptyQuery;
+        // const query = std.mem.trim(u8, args, ",");
+        // if (query.len == 0) return error.EmptyQuery;
 
-        try writer.print("Search results for '{s}':\n", .{query});
+        try writer.print("Search results for '{s}':\n", .{args});
         try writer.print("ID\tTitle\t\t\tSubject\t\tType\t\tPriority\tStatus\t\tDue Date\n", .{});
         try writer.print("--------------------------------------------------------------------\n", .{});
 
         var found = false;
         for (self.items.items) |item| {
-            if (std.mem.containsAtLeast(u8, item.title, 1, query) or
-                std.mem.containsAtLeast(u8, item.subject, 1, query) or
-                (item.description != null and std.mem.containsAtLeast(u8, item.description.?, 1, query)) or
-                (item.notes != null and std.mem.containsAtLeast(u8, item.notes.?, 1, query)))
+            if (std.mem.containsAtLeast(u8, item.title, 1, args) or
+                std.mem.containsAtLeast(u8, item.subject, 1, args) or
+                (item.description != null and std.mem.containsAtLeast(u8, item.description.?, 1, args)) or
+                (item.notes != null and std.mem.containsAtLeast(u8, item.notes.?, 1, args)))
             {
                 found = true;
-                const due_str = if (item.due_date) |due| due else "None";
-                std.debug.print("{}\t{s:<20}\t{s:<10}\t{s:<10}\t{s:<10}\t{s:<10}\t{s}\n", .{ item.id, item.title, item.subject, @tagName(item.item_type), @tagName(item.priority), @tagName(item.status), due_str });
+                try writer.print("{}\t{s:<20}\t{s:<10}\t{s:<10}\t{s:<10}\t{s:<10}\t", .{ item.id, item.title, item.subject, @tagName(item.item_type), @tagName(item.priority), @tagName(item.status) });
+
+                if (item.due_date) |due| {
+                    try due.format(time.Format.date_time, .{}, writer);
+                    try writer.print("\n", .{});
+                } else {
+                    try writer.print("None\n", .{});
+                }
             }
         }
 
         if (!found) {
-            std.debug.print("No items found matching '{s}'\n", .{query});
+            try writer.print("No items found matching '{s}'\n", .{args});
         }
     }
 
@@ -336,6 +361,6 @@ pub const schuldb = struct {
         if (b.due_date == null) return true;
 
         // Simple string comparison works for YYYY-MM-DD format
-        return std.mem.lessThan(u8, a.due_date.?, b.due_date.?);
+        return a.due_date.?.value < b.due_date.?.value;
     }
 };
