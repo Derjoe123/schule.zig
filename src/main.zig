@@ -88,7 +88,7 @@ pub fn main() !void {
         try school_db.rank(cmd, writer);
     }
     if (config.remove) |cmd| {
-        try school_db.remove(cmd);
+        try school_db.remove(cmd, writer);
     }
     if (config.search) |cmd| {
         try school_db.search(cmd, writer);
@@ -97,7 +97,7 @@ pub fn main() !void {
         try school_db.status(cmd, writer);
     }
     if (config.add) |cmd| {
-        try school_db.add(cmd);
+        try school_db.add(cmd, writer);
     }
 
     const data = school_db.toData();

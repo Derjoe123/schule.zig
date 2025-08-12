@@ -121,10 +121,9 @@ pub const schuldb = struct {
         self.items.deinit();
     }
 
-    // Command: add <title> <subject> <type> <priority> [due_date] [description]
-    pub fn add(self: *Self, args: []const u8) !void {
-        std.debug.print("args: {s}\n", .{args});
-        var parts = std.mem.splitScalar(u8, args, ' ');
+    // Command: add <title>,<subject>,<type>,<priority>,[due_date],[description]
+    pub fn add(self: *Self, args: []const u8, writer: anytype) !void {
+        var parts = std.mem.splitScalar(u8, args, ',');
 
         const title = parts.next() orelse return error.MissingTitle;
         const subject = parts.next() orelse return error.MissingSubject;
@@ -156,12 +155,12 @@ pub const schuldb = struct {
         try self.items.append(new_item);
         self.next_id += 1;
 
-        std.debug.print("Added item '{any}' with ID {any}\n", .{ title, new_item.id });
+        try writer.print("Added item '{any}' with ID {any}\n", .{ title, new_item.id });
     }
 
     // Command: remove <id>
-    pub fn remove(self: *Self, args: []const u8) !void {
-        const id = std.fmt.parseInt(u32, std.mem.trim(u8, args, " "), 10) catch return error.InvalidId;
+    pub fn remove(self: *Self, args: []const u8, writer: anytype) !void {
+        const id = std.fmt.parseInt(u32, args, 10) catch return error.InvalidId;
 
         for (self.items.items, 0..) |item, i| {
             if (item.id == id) {
@@ -175,7 +174,7 @@ pub const schuldb = struct {
                 if (removed_item.due_date) |due| self.allocator.free(due);
                 if (removed_item.notes) |notes| self.allocator.free(notes);
 
-                std.debug.print("Removed item with ID {}\n", .{id});
+                try writer.print("Removed item with ID {}\n", .{id});
                 return;
             }
         }
@@ -184,7 +183,7 @@ pub const schuldb = struct {
 
     // Command: list [filter]
     pub fn list(self: *Self, args: []const u8, writer: anytype) !void {
-        const filter = std.mem.trim(u8, args, " ");
+        const filter = std.mem.trim(u8, args, ",");
 
         try writer.print("ID\tTitle\t\t\tSubject\t\tType\t\tPriority\tStatus\t\tDue Date\n", .{});
         try writer.print("--------------------------------------------------------------------\n", .{});
@@ -248,7 +247,7 @@ pub const schuldb = struct {
 
     // Command: modify <id> <field> <value>
     pub fn modify(self: *Self, args: []const u8, writer: anytype) !void {
-        var parts = std.mem.splitScalar(u8, args, ' ');
+        var parts = std.mem.splitScalar(u8, args, ',');
 
         const id_str = parts.next() orelse return error.MissingId;
         const field = parts.next() orelse return error.MissingField;
