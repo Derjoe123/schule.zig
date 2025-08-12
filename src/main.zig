@@ -106,7 +106,7 @@ pub fn main() !void {
 
 fn loadExistingData(db: *db_parser_t, allocator: std.mem.Allocator) ?std.json.Parsed(schuldb_mod.SchulDBData) {
     return db.get_content(allocator) catch |err| {
-        std.debug.print("Error loading database: {}\n", .{err});
+        std.log.err("Error loading database: {}\n", .{err});
         return null;
     };
 }

@@ -280,7 +280,7 @@ pub const schuldb = struct {
 
     // Command: rank [by_priority|by_due]
     pub fn rank(self: *Self, args: []const u8, writer: anytype) !void {
-        const sort_type = std.mem.trim(u8, args, " ");
+        const sort_type = std.mem.trim(u8, args, ",");
 
         if (std.mem.eql(u8, sort_type, "by_priority") or sort_type.len == 0) {
             std.mem.sort(SchoolItem, self.items.items, {}, compareByPriority);
