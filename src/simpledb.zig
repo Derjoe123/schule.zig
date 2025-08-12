@@ -51,7 +51,7 @@ pub fn SimpleDB(comptime DBStructDataType: type, comptime MaxByteSize: usize) ty
             return s;
         }
 
-        pub fn deinit(self: *const Self) void {
+        pub fn deinit(self: *Self) void {
             self.db_file.close();
         }
     };

@@ -72,7 +72,7 @@ pub fn main() !void {
     var existing_data: ?db_parser_t.DBContent = null;
     defer {
         school_db.deinit();
-        if (existing_data) |data| {
+        if (existing_data) |*data| {
             data.deinit();
         }
     }
@@ -80,7 +80,7 @@ pub fn main() !void {
     // Load existing data or create new
     if (loadExistingData(&db_parser, alloc)) |data| {
         existing_data = data;
-        school_db = try schuldb.fromData(data.arena.allocator(), data.value);
+        school_db = try schuldb.fromData(data.json.arena.allocator(), data.json.value);
     } else {
         school_db = schuldb.init(alloc);
     }
