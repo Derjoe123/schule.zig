@@ -77,7 +77,7 @@ pub fn main() !void {
 
     defer school_db.deinit();
 
-    try writer.print("schulddb: {}", .{school_db});
+    try writer.print("\n", .{});
     if (config.list) |cmd| {
         try school_db.list(cmd, writer);
     }
@@ -99,7 +99,7 @@ pub fn main() !void {
     if (config.add) |cmd| {
         try school_db.add(cmd, writer);
     }
-
+    try writer.print("\n", .{});
     const data = school_db.toData();
     try db_parser.write_content(&data);
 }
