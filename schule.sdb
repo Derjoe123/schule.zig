@@ -1,1 +1,1 @@
-{"items":[],"next_id":1}
+{"items":[{"id":1,"title":"Math Homework","description":"Chapter 5 problems","subject":"Mathematics","item_type":"Homework","priority":"High","status":"NotStarted","due_date":{"value":1723676400000000000,"loc":{"offset":3600,"name":"CET"}},"created_date":{"value":1755031913764192715,"loc":{"offset":0,"name":"UTC"}},"notes":null}],"next_id":2}
