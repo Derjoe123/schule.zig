@@ -71,6 +71,7 @@ pub fn main() !void {
         try schuldb.fromData(alloc, existing_data.value)
     else
         schuldb.init(alloc);
+    try writer.print("schulddb: {}", .{school_db});
 
     defer school_db.deinit();
     // var db = old_content.value;
