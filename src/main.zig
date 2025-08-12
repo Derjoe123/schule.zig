@@ -36,11 +36,6 @@ pub fn main() !void {
     const argv = std.os.argv;
     const writer = std.io.getStdOut().writer();
 
-    // const input_cmds: []const command_input = &[_]command_input{
-    //     command_input{ .name = "status", .desc = "print the status of the school database", .exec = status_fn, .command_arg = "" },
-    //     command_input{ .name = "list", .desc = "print a list of selected category", .exec = status_fn, .command_arg = "category" },
-    // };
-
     try args.parse_args(argv, &config);
     if (args.flag_set(argv, "--help")) {
         const flags: []const args.Flag = &[_]args.Flag{
@@ -77,7 +72,10 @@ pub fn main() !void {
     defer db.deinit();
     const old_content = try db.get_content(alloc);
     defer old_content.deinit();
-    // try args.exec_commaeds_with_args(@ptrCast(&db), input_cmds, argv);
+    {
+        if (config.list_cmd) |cmd| {}
+        // try args.exec_commaeds_with_args(@ptrCast(&db), input_cmds, argv);
+    }
     const new_content = database{ .tables = &[_]table{ table{ .data = "test" }, table{ .data = "test2" } } };
     try db.write_content(&new_content);
 }
