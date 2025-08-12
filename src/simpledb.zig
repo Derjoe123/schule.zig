@@ -14,7 +14,7 @@ pub fn SimpleDB(comptime DBStructDataType: type, comptime MaxByteSize: usize) ty
 
         pub fn get_content(self: *const Self, allocator: std.mem.Allocator) !std.json.Parsed(DBStructDataType) {
             const content = try self.get_db_content(allocator);
-            defer allocator.free(content);
+            // defer allocator.free(content);
             return try std.json.parseFromSlice(DBStructDataType, allocator, content, .{ .ignore_unknown_fields = true });
         }
 
