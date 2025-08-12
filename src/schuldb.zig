@@ -69,35 +69,61 @@ pub const SchoolItem = struct {
     notes: ?[]const u8,
 };
 
+// JSON-serializable data structure
+pub const SchulDBData = struct {
+    items: []SchoolItem,
+    next_id: u32,
+};
+
 pub const schuldb = struct {
     const Self = @This();
 
     items: std.ArrayList(SchoolItem),
-    next_id: u64,
+    next_id: u32,
+    allocator: std.mem.Allocator,
 
     pub fn init(allocator: std.mem.Allocator) Self {
         return Self{
             .items = std.ArrayList(SchoolItem).init(allocator),
             .next_id = 1,
+            .allocator = allocator,
         };
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
+    pub fn fromData(allocator: std.mem.Allocator, data: SchulDBData) !Self {
+        var self = Self.init(allocator);
+        self.next_id = data.next_id;
+
+        for (data.items) |item| {
+            try self.items.append(item);
+        }
+
+        return self;
+    }
+
+    pub fn toData(self: *const Self) SchulDBData {
+        return SchulDBData{
+            .items = self.items.items,
+            .next_id = self.next_id,
+        };
+    }
+
+    pub fn deinit(self: *Self) void {
         // Free memory for strings in items
         for (self.items.items) |item| {
-            allocator.free(item.title);
-            if (item.description) |desc| allocator.free(desc);
-            allocator.free(item.subject);
-            allocator.free(item.created_date);
-            if (item.due_date) |due| allocator.free(due);
-            if (item.notes) |notes| allocator.free(notes);
+            self.allocator.free(item.title);
+            if (item.description) |desc| self.allocator.free(desc);
+            self.allocator.free(item.subject);
+            self.allocator.free(item.created_date);
+            if (item.due_date) |due| self.allocator.free(due);
+            if (item.notes) |notes| self.allocator.free(notes);
         }
         self.items.deinit();
     }
 
     // Command: add <title> <subject> <type> <priority> [due_date] [description]
-    pub fn add(self: *Self, args: []const u8, allocator: std.mem.Allocator) !void {
-        var parts = std.mem.splitAny(u8, args, " ");
+    pub fn add(self: *Self, args: []const u8) !void {
+        var parts = std.mem.split(u8, args, " ");
 
         const title = parts.next() orelse return error.MissingTitle;
         const subject = parts.next() orelse return error.MissingSubject;
@@ -111,17 +137,17 @@ pub const schuldb = struct {
         const description = parts.next();
 
         // Get current date (simplified - you might want to use a proper date library)
-        const created_date = try allocator.dupe(u8, "2024-08-12"); // You should implement proper date handling
+        const created_date = try self.allocator.dupe(u8, "2024-08-12"); // You should implement proper date handling
 
         const new_item = SchoolItem{
             .id = self.next_id,
-            .title = try allocator.dupe(u8, title),
-            .description = if (description) |desc| try allocator.dupe(u8, desc) else null,
-            .subject = try allocator.dupe(u8, subject),
+            .title = try self.allocator.dupe(u8, title),
+            .description = if (description) |desc| try self.allocator.dupe(u8, desc) else null,
+            .subject = try self.allocator.dupe(u8, subject),
             .item_type = item_type,
             .priority = priority,
             .status = .NotStarted,
-            .due_date = if (due_date) |due| try allocator.dupe(u8, due) else null,
+            .due_date = if (due_date) |due| try self.allocator.dupe(u8, due) else null,
             .created_date = created_date,
             .notes = null,
         };
@@ -133,7 +159,7 @@ pub const schuldb = struct {
     }
 
     // Command: remove <id>
-    pub fn remove(self: *Self, args: []const u8, allocator: std.mem.Allocator) !void {
+    pub fn remove(self: *Self, args: []const u8) !void {
         const id = std.fmt.parseInt(u32, std.mem.trim(u8, args, " "), 10) catch return error.InvalidId;
 
         for (self.items.items, 0..) |item, i| {
@@ -141,12 +167,12 @@ pub const schuldb = struct {
                 const removed_item = self.items.swapRemove(i);
 
                 // Free memory
-                allocator.free(removed_item.title);
-                if (removed_item.description) |desc| allocator.free(desc);
-                allocator.free(removed_item.subject);
-                allocator.free(removed_item.created_date);
-                if (removed_item.due_date) |due| allocator.free(due);
-                if (removed_item.notes) |notes| allocator.free(notes);
+                self.allocator.free(removed_item.title);
+                if (removed_item.description) |desc| self.allocator.free(desc);
+                self.allocator.free(removed_item.subject);
+                self.allocator.free(removed_item.created_date);
+                if (removed_item.due_date) |due| self.allocator.free(due);
+                if (removed_item.notes) |notes| self.allocator.free(notes);
 
                 std.debug.print("Removed item with ID {}\n", .{id});
                 return;
@@ -178,48 +204,50 @@ pub const schuldb = struct {
     }
 
     // Command: status
-    pub fn status(self: *Self, writer: anytype) !void {
-        try writer.print("=== SCHOOL STATUS REPORT ===\n\n", .{});
+    pub fn status(self: *Self, args: []const u8) !void {
+        _ = args; // unused
+
+        std.debug.print("=== SCHOOL STATUS REPORT ===\n\n");
 
         // Show overdue items
-        try writer.print("OVERDUE ITEMS:\n", .{});
+        std.debug.print("OVERDUE ITEMS:\n");
         var has_overdue = false;
         for (self.items.items) |item| {
             if (item.status == .Overdue) {
                 has_overdue = true;
                 const due_str = if (item.due_date) |due| due else "No due date";
-                try writer.print("  [{}] {s} ({s}) - Due: {s}\n", .{ item.id, item.title, item.subject, due_str });
+                std.debug.print("  [{}] {s} ({s}) - Due: {s}\n", .{ item.id, item.title, item.subject, due_str });
             }
         }
-        if (!has_overdue) try writer.print("  None\n", .{});
+        if (!has_overdue) std.debug.print("  None\n");
 
         // Show high priority items
-        try writer.print("\nHIGH PRIORITY ITEMS:\n", .{});
+        std.debug.print("\nHIGH PRIORITY ITEMS:\n");
         var has_high_priority = false;
         for (self.items.items) |item| {
             if (item.priority == .High or item.priority == .Critical) {
                 has_high_priority = true;
                 const due_str = if (item.due_date) |due| due else "No due date";
-                try writer.print("  [{}] {s} ({s}) - Priority: {s}, Due: {s}\n", .{ item.id, item.title, item.subject, @tagName(item.priority), due_str });
+                std.debug.print("  [{}] {s} ({s}) - Priority: {s}, Due: {s}\n", .{ item.id, item.title, item.subject, @tagName(item.priority), due_str });
             }
         }
-        if (!has_high_priority) try writer.print("  None\n", .{});
+        if (!has_high_priority) std.debug.print("  None\n");
 
         // Show upcoming items (items with due dates in the next 7 days)
-        try writer.print("\nUPCOMING ITEMS:\n", .{});
+        std.debug.print("\nUPCOMING ITEMS:\n");
         var has_upcoming = false;
         for (self.items.items) |item| {
             if (item.due_date != null and item.status != .Completed) {
                 has_upcoming = true;
-                try writer.print("  [{}] {s} ({s}) - Due: {s}\n", .{ item.id, item.title, item.subject, item.due_date.? });
+                std.debug.print("  [{}] {s} ({s}) - Due: {s}\n", .{ item.id, item.title, item.subject, item.due_date.? });
             }
         }
-        if (!has_upcoming) try writer.print("  None\n", .{});
+        if (!has_upcoming) std.debug.print("  None\n");
     }
 
     // Command: modify <id> <field> <value>
-    pub fn modify(self: *Self, args: []const u8, allocator: std.mem.Allocator) !void {
-        var parts = std.mem.splitScalar(u8, args, ' ');
+    pub fn modify(self: *Self, args: []const u8) !void {
+        var parts = std.mem.split(u8, args, " ");
 
         const id_str = parts.next() orelse return error.MissingId;
         const field = parts.next() orelse return error.MissingField;
@@ -234,16 +262,16 @@ pub const schuldb = struct {
                 } else if (std.mem.eql(u8, field, "priority")) {
                     item.priority = Priority.fromString(value) orelse return error.InvalidPriority;
                 } else if (std.mem.eql(u8, field, "due_date")) {
-                    if (item.due_date) |old_due| allocator.free(old_due);
-                    item.due_date = try allocator.dupe(u8, value);
+                    if (item.due_date) |old_due| self.allocator.free(old_due);
+                    item.due_date = try self.allocator.dupe(u8, value);
                 } else if (std.mem.eql(u8, field, "notes")) {
-                    if (item.notes) |old_notes| allocator.free(old_notes);
-                    item.notes = try allocator.dupe(u8, value);
+                    if (item.notes) |old_notes| self.allocator.free(old_notes);
+                    item.notes = try self.allocator.dupe(u8, value);
                 } else {
                     return error.InvalidField;
                 }
 
-                std.info.log("Modified item {} - set {} to {s}\n", .{ id, field, value });
+                std.debug.print("Modified item {} - set {} to {s}\n", .{ id, field, value });
                 return;
             }
         }

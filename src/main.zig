@@ -11,6 +11,7 @@ var config = struct {
     // remove_cmd: ?[]const u8 = null,
 }{};
 
+const db_parser_t = simpledb.SimpleDB(schuldb, schuldb_mod.SchulDBData, 1024 * 1024 * 1024);
 fn status_fn(db: *void) anyerror!void {
     _ = db;
     std.log.info("\nstatus_fn\n", .{});
@@ -62,11 +63,16 @@ pub fn main() !void {
     // if (config.do_git_push) {
     //     try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push" }, alloc, 2048);
     // }
-    const db_parser_t = simpledb.SimpleDB(schuldb.schuldb, 1024 * 1024 * 1024);
     var db_parser = try db_parser_t.init(dir_buf_view);
     defer db_parser.deinit();
-    // var old_content = try db_parser.get_content(alloc);
-    // defer old_content.deinit();
+
+    // Load existing data or create new
+    var school_db = if (loadExistingData(&db_parser, alloc)) |existing_data|
+        try schuldb.fromData(alloc, existing_data.value)
+    else
+        schuldb.init(alloc);
+
+    defer school_db.deinit();
     // var db = old_content.value;
     // // if (config.cmd) |c_cmd| {
     // try db.status(writer);
@@ -80,10 +86,23 @@ pub fn main() !void {
     // try db_parser.write_content(&db);
 }
 
+fn loadExistingData(db: *db_parser_t, allocator: std.mem.Allocator) ?std.json.Parsed(schuldb_mod.SchulDBData) {
+    return db.get_content(allocator) catch |err| switch (err) {
+        // error.EndOfStream => {
+        //     // Empty file, return null to create new database
+        //     return null;
+        // },
+        else => {
+            std.debug.print("Error loading database: {}\n", .{err});
+            return null;
+        },
+    };
+}
 const std = @import("std");
 
 const schule_lib = @import("schule_zig_lib");
 const args = schule_lib.args;
 const simpledb = schule_lib.simpledb;
 const shellcmd = schule_lib.shellcmd.shellcmd;
-const schuldb = schule_lib.schuldb;
+const schuldb = schule_lib.schuldb.schuldb;
+const schuldb_mod = schule_lib.schuldb;
