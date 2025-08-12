@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub fn SimpleDB(comptime DBStructType: type, comptime DBStructDataType: type, comptime MaxByteSize: usize) type {
+pub fn SimpleDB(comptime DBStructDataType: type, comptime MaxByteSize: usize) type {
     return struct {
         const Self = @This();
 
@@ -18,7 +18,7 @@ pub fn SimpleDB(comptime DBStructType: type, comptime DBStructDataType: type, co
             return try std.json.parseFromSlice(DBStructDataType, allocator, content, .{ .ignore_unknown_fields = true });
         }
 
-        pub fn write_content(self: *const Self, content: *const DBStructType) !void {
+        pub fn write_content(self: *const Self, content: *const DBStructDataType) !void {
             try self.db_file.seekTo(0);
             try self.db_file.setEndPos(0);
             const dbwriter = self.db_file.writer();
