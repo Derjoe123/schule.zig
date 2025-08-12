@@ -4,8 +4,10 @@ var config = struct {
     do_git_pull: bool = true,
     do_git_commit: bool = true,
     do_git_push: bool = true,
-    list_items: []const u8,
-}{ .list_items = "" };
+    list_cmd: ?[]const u8 = null,
+    new_cmd: ?[]const u8 = null,
+    remove_cmd: ?[]const u8 = null,
+}{};
 
 fn status_fn(db: *void) anyerror!void {
     _ = db;
@@ -74,7 +76,7 @@ pub fn main() !void {
     defer db.deinit();
     const old_content = try db.get_content(alloc);
     defer old_content.deinit();
-    // try args.exec_commands_with_args(@ptrCast(&db), input_cmds, argv);
+    // try args.exec_commaeds_with_args(@ptrCast(&db), input_cmds, argv);
     const new_content = database{ .tables = &[_]table{ table{ .data = "test" }, table{ .data = "test2" } } };
     try db.write_content(&new_content);
 }

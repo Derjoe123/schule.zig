@@ -20,7 +20,7 @@ pub fn display_args_help(writer: anytype, Struct: anytype, flags: []const Flag) 
                 try std.fmt.format(writer, "\n\t{s}: \n\t\ttype: {s}\n\t\tdefault: \"{s}\"\n", .{ field.name, @typeName(field.type), field.defaultValue() orelse "No Default" });
             },
             else => {
-                try std.fmt.format(writer, "\n\t{s}: \n\t\ttype: {s}\n\t\tdefault: {}\n", .{ field.name, @typeName(field.type), field.defaultValue() orelse null });
+                try std.fmt.format(writer, "\n\t{s}: \n\t\ttype: {s}\n\t\tdefault: {any}\n", .{ field.name, @typeName(field.type), field.defaultValue() orelse null });
             },
         }
     }
@@ -43,6 +43,33 @@ pub fn parse_args(args: [][*:0]u8, Struct: anytype) !void {
         const fieldname: []const u8 = field.name;
         if (try_get_arg(args, "-" ++ fieldname)) |arg| {
             switch (field.type) {
+                ?bool => {
+                    if (arg) |c_arg| {
+                        @field(Struct, field.name) =
+                            std.mem.eql(u8, c_arg, "true") or std.mem.eql(u8, c_arg, "True");
+                    } else {
+                        @field(Struct, field.name) = null;
+                    }
+                },
+                ?[]const u8 => {
+                    @field(Struct, field.name) = arg;
+                },
+                ?i64, ?i32, ?i16, ?i8, ?u64, ?u32, ?u16, ?u8 => {
+                    if (arg) |c_arg| {
+                        @field(Struct, field.name) =
+                            try std.fmt.parseInt(field.type, c_arg, 0);
+                    } else {
+                        @field(Struct, field.name) = null;
+                    }
+                },
+                ?f64, ?f32, ?f16 => {
+                    if (arg) |c_arg| {
+                        @field(Struct, field.name) =
+                            try std.fmt.parseFloat(field.type, c_arg, 0);
+                    } else {
+                        @field(Struct, field.name) = null;
+                    }
+                },
                 bool => {
                     @field(Struct, field.name) = std.mem.eql(u8, arg, "true") or std.mem.eql(u8, arg, "True");
                 },
