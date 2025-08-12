@@ -110,14 +110,14 @@ pub const schuldb = struct {
 
     pub fn deinit(self: *Self) void {
         // Free memory for strings in items
-        for (self.items.items) |item| {
-            self.allocator.free(item.title);
-            if (item.description) |desc| self.allocator.free(desc);
-            self.allocator.free(item.subject);
-            self.allocator.free(item.created_date);
-            if (item.due_date) |due| self.allocator.free(due);
-            if (item.notes) |notes| self.allocator.free(notes);
-        }
+        // for (self.items.items) |item| {
+        //     self.allocator.free(item.title);
+        //     if (item.description) |desc| self.allocator.free(desc);
+        //     self.allocator.free(item.subject);
+        //     self.allocator.free(item.created_date);
+        //     if (item.due_date) |due| self.allocator.free(due);
+        //     if (item.notes) |notes| self.allocator.free(notes);
+        // }
         self.items.deinit();
     }
 
