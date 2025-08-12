@@ -4,10 +4,11 @@ var config = struct {
     do_git_pull: bool = true,
     do_git_commit: bool = true,
     do_git_push: bool = true,
-    status_cmd: ?[]const u8 = null,
-    list_cmd: ?[]const u8 = null,
-    new_cmd: ?[]const u8 = null,
-    remove_cmd: ?[]const u8 = null,
+    cmd: ?[]const u8 = null,
+    // status_cmd: ?[]const u8 = null,
+    // list_cmd: ?[]const u8 = null,
+    // new_cmd: ?[]const u8 = null,
+    // remove_cmd: ?[]const u8 = null,
 }{};
 
 fn status_fn(db: *void) anyerror!void {
@@ -15,12 +16,6 @@ fn status_fn(db: *void) anyerror!void {
     std.log.info("\nstatus_fn\n", .{});
     // return error.Unimpl;
 }
-const table = struct {
-    data: []const u8,
-};
-const database = struct {
-    tables: []const table,
-};
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}).init;
     const alloc = gpa.allocator();
@@ -68,16 +63,16 @@ pub fn main() !void {
     //     try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push" }, alloc, 2048);
     // }
 
-    var db = try simpledb.SimpleDB(database, 1024 * 1024 * 1024).init(dir_buf_view);
-    defer db.deinit();
-    const old_content = try db.get_content(alloc);
+    var db_parser = try simpledb.SimpleDB(u64, 1024 * 1024 * 1024).init(dir_buf_view);
+    defer db_parser.deinit();
+    var old_content = try db_parser.get_content(alloc);
     defer old_content.deinit();
-    {
-        if (config.list_cmd) |cmd| {}
-        // try args.exec_commaeds_with_args(@ptrCast(&db), input_cmds, argv);
-    }
-    const new_content = database{ .tables = &[_]table{ table{ .data = "test" }, table{ .data = "test2" } } };
-    try db.write_content(&new_content);
+    var db = old_content.value;
+    // if (config.cmd) |c_cmd| {
+    // try db.status(writer);
+    // }
+    // try args.exec_commaeds_with_args(@ptrCast(&db), input_cmds, argv);
+    try db_parser.write_content(&db);
 }
 
 const std = @import("std");
@@ -86,3 +81,4 @@ const schule_lib = @import("schule_zig_lib");
 const args = schule_lib.args;
 const simpledb = schule_lib.simpledb;
 const shellcmd = schule_lib.shellcmd.shellcmd;
+const schuldb = schule_lib.schuldb;
