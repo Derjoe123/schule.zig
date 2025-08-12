@@ -80,7 +80,7 @@ pub fn main() !void {
     // Load existing data or create new
     if (loadExistingData(&db_parser, alloc)) |data| {
         existing_data = data;
-        school_db = try schuldb.fromData(alloc, data.value);
+        school_db = try schuldb.fromData(data.arena.allocator(), data.value);
     } else {
         school_db = schuldb.init(alloc);
     }
