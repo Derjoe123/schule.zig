@@ -65,10 +65,9 @@ pub fn main() !void {
 
     var db_parser = try simpledb.SimpleDB(u64, 1024 * 1024 * 1024).init(dir_buf_view);
     defer db_parser.deinit();
-    // var old_content = try db_parser.get_content(alloc);
-    // defer old_content.deinit();
-    // var db = old_content.value;
-    const db: u64 = 123;
+    var old_content = try db_parser.get_content(alloc);
+    defer old_content.deinit();
+    var db = old_content.value;
     // if (config.cmd) |c_cmd| {
     // try db.status(writer);
     // }
