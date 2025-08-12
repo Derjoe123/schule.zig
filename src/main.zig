@@ -70,13 +70,17 @@ pub fn main() !void {
 
     var school_db: schuldb = undefined;
     var existing_data: ?std.json.Parsed(schuldb_mod.SchulDBData) = null;
-    defer if (existing_data) |data| data.deinit();
-    defer school_db.deinit();
+    defer {
+        if (existing_data) |data| {
+            data.deinit();
+        }
+        school_db.deinit();
+    }
 
     // Load existing data or create new
     if (loadExistingData(&db_parser, alloc)) |data| {
         existing_data = data;
-        school_db = try schuldb.fromData(data.arena.allocator(), data.value);
+        school_db = try schuldb.fromData(alloc, data.value);
     } else {
         school_db = schuldb.init(alloc);
     }
