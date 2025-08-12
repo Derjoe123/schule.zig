@@ -6,16 +6,16 @@ pub fn SimpleDB(comptime DBStructType: type, comptime MaxByteSize: usize) type {
 
         db_file: std.fs.File = undefined,
 
-        fn get_db_content(self: *const Self, allocator: anytype) ![]u8 {
+        fn get_db_content(self: *const Self, allocator: std.mem.Allocator) ![]u8 {
             const arr = try self.db_file.readToEndAlloc(allocator, MaxByteSize);
             try self.db_file.seekTo(0);
             return arr;
         }
 
-        pub fn get_content(self: *const Self, allocator: anytype) !std.json.Parsed(DBStructType) {
+        pub fn get_content(self: *const Self, allocator: std.mem.Allocator) !std.json.Parsed(DBStructType) {
             const content = try self.get_db_content(allocator);
             defer allocator.free(content);
-            return try std.json.parseFromSlice(DBStructType, allocator, content, .{});
+            return try std.json.parseFromSlice(DBStructType, allocator, content, .{ .ignore_unknown_fields = true });
         }
 
         pub fn write_content(self: *const Self, content: *const DBStructType) !void {

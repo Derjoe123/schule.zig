@@ -62,17 +62,22 @@ pub fn main() !void {
     // if (config.do_git_push) {
     //     try shellcmd.execute_and_print_output_blocking(writer, config.directory, &[_][]const u8{ "git", "push" }, alloc, 2048);
     // }
-
-    var db_parser = try simpledb.SimpleDB(u64, 1024 * 1024 * 1024).init(dir_buf_view);
+    const db_parser_t = simpledb.SimpleDB(schuldb.schuldb, 1024 * 1024 * 1024);
+    var db_parser = try db_parser_t.init(dir_buf_view);
     defer db_parser.deinit();
-    var old_content = try db_parser.get_content(alloc);
-    defer old_content.deinit();
-    var db = old_content.value;
-    // if (config.cmd) |c_cmd| {
+    // var old_content = try db_parser.get_content(alloc);
+    // defer old_content.deinit();
+    // var db = old_content.value;
+    // // if (config.cmd) |c_cmd| {
     // try db.status(writer);
-    // }
-    // try args.exec_commaeds_with_args(@ptrCast(&db), input_cmds, argv);
-    try db_parser.write_content(&db);
+    // // }
+    // try db_parser.write_content(&db);
+    // var db_parser = try simpledb.SimpleDB(u64, 1024 * 1024 * 1024).init(dir_buf_view);
+    // defer db_parser.deinit();
+    // var old_content = try db_parser.get_content(alloc);
+    // defer old_content.deinit();
+    // var db = old_content.value;
+    // try db_parser.write_content(&db);
 }
 
 const std = @import("std");
